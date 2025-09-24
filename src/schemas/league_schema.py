@@ -17,7 +17,7 @@ class LeagueSchema:
                 StructField("logo", StringType(), True),
             ]), nullable=False),
 
-            StructField("season", ArrayType(StructType([
+            StructField("seasons", ArrayType(StructType([
                 StructField("year", IntegerType(), nullable=False),
                 StructField("start", StringType(), nullable=False),
                 StructField("end", StringType(), nullable=False),

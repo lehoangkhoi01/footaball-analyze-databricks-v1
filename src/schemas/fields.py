@@ -28,30 +28,61 @@ class TableNames:
     STAGING_FIXTURE = "fixture_tracking"
     TRACKING_FETCH_FIXTURE_STAT = "tracking_fetch_fixture_stat"
     TRACKING_FETCH_FIXTURE_STAT_LEAGUE = "tracking_fetch_fixture_stat_league"
+
+    # BRONZE TABLES
     BRONZE_TEAMS = "bronze_teams"
     BRONZE_LEAGUES = "bronze_leagues"
     BRONZE_FIXTURES = "bronze_fixtures"
     BRONZE_FIXTURE_STATS = "bronze_fixture_stats"
+
+    # INTERMEDIATE BRONZE TABLES
+    INTERMEDIATE_BRONZE_LEAGUES = "clean_bronze_leagues"
+    FLATTEN_BRONZE_TEAMS = "flattened_bronze_teams"
+    INTERMEDIATE_BRONZE_TEAMS = "clean_bronze_teams"
+    FLATTENED_BRONZE_FIXTURES = "flattend_bronze_fixtures"
+    INTERMEDIATE_BRONZE_FIXTURES = "clean_bronze_fixtures"
+    INTERMEDIATE_BRONZE_TRANSFORMED_FIX_STATS = "intermediate_bronze_transform_fix_stats"
+    INTERMEDIATE_BRONZE_PIVOTED_FIXTURE_STATS = "intermediate_bronze_pivoted_fixture_stats"
+    INTERMEDIATE_BRONZE_FIXTURES_STATS = "clean_bronze_fixture_stats"
+
+    # SILVER TABLES
     SILVER_LEAGUES = "silver_leagues"
-    FLATTENED_SILVER_TEAMS = "flattend_silver_teams"
     SILVER_TEAMS = "silver_teams"
     SILVER_FIXTURES = "silver_fixtures"
-    FLATTENED_BRONZE_FIXTURES = "flattend_bronze_fixtures"
+    SILVER_FIXTURE_STATS = "silver_fixture_stats"
+    # -------------------
+    
+    # INTERMEDIATE SILVER TABLES
+    INTERMEDIATE_SILVER_FIXTURES = "int_silver_fixtures"
+    INTERMEDIATE_SILVER_FIXTURE_STATS = "int_silver_fixture_stats"
+    # ------------------
+
+
+    FLATTENED_SILVER_TEAMS = "flattend_silver_teams"
     LEAGUES = "leagues"
     FIXTURE_STATS = "fixture_stats"
-    INTERMEDIATE_SILVER_FIXTURE_STATS = "intermediate_silver_fixture_stats"
-    SILVER_FIXTURE_STATS = "silver_fixture_stats"
+    
+    # GOLD DIM TABLES
     DIM_LEAGUES = "dim_leagues"
     DIM_DATES = "dim_dates"
     DIM_TEAMS = "dim_teams"
+    # ------------------
+
     DIM_FIXTURES = "dim_fixtures"
     DIM_FIXTURE_STATS = "dim_fixture_stats"
+
+    # GOLD FACT TABLES
     FACT_MATCH_RESULT = "fact_match_result"
     FACT_MATCH_STATS = "fact_match_stats"
     FACT_MATCH_STATISTICS = "fact_match_statistics"
     FACT_TEAM_RESULT = "fact_team_result"
     FACT_TEAM_MATCH_STATS = "fact_team_match_stats"
     FACT_TEAM_RESULT_SUMMARY = "fact_team_result_summary"
+    # ---------------------------
+
+    # gold tables
+    REPORT_MATCH_RESULT = "report_match_result"
+    REPORT_MATCH_STATS = "report_match_stats"
 
 class CommonFields:
     FIXTURE_ID = "fixture_id"
@@ -143,6 +174,7 @@ class FixtureFields:
 
 class FixtureStatsFields:
     FIXTURE_STAT_KEY = "fixture_stat_key"
+    IS_HOME_MATCH = "is_home_match"
     SHOTS_ON_GOAL = "shots_on_goal"
     SHOTS_OFF_GOAL = "shots_off_goal"
     BLOCKED_SHOTS = "blocked_shots"
@@ -181,6 +213,11 @@ class FactMatchResultFields:
     DIM_HOME_TEAM_KEY = "dim_home_team_key"
     DIM_AWAY_TEAM_KEY = "dim_away_team_key"
     DIM_LEAGUE_KEY = "dim_league_key"
+
+    LEAGUE_ID = "league_id"
+    HOME_TEAM_ID = "home_team_id"
+    AWAY_TEAM_ID = "away_team_id"
+    FIXTURE_ID = "fixture_id"
 
     LEAGUE_NAME = "league_name"
     HOME_TEAM_NAME = "home_team_name"

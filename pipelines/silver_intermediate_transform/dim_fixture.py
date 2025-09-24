@@ -7,14 +7,14 @@ from pyspark.sql.window import Window
 from src.utils.football_utils import DataFrameFootballUtils
 
 @dlt.table(
-    name=f"gold.{TableNames.DIM_FIXTURES}",
-    table_properties={"quality": "gold"},
+    name=f"silver_intermediate.{TableNames.INTERMEDIATE_SILVER_FIXTURES}",
+    table_properties={"quality": "silver"},
     schema=FixtureSchema.get_dim_fixture_schema()
 )
 def dim_fixtures():
     silver_fixtures_df = spark.read.table(f"silver.{TableNames.SILVER_FIXTURES}")
 
-    dim_fixture_df = (
+    int_silver_fixture_df = (
         silver_fixtures_df
         .withColumn(
             FixtureFields.SCORE_FULLTIME,
@@ -40,10 +40,10 @@ def dim_fixtures():
     )
     # Add surrogate key
     window_spec = Window.orderBy(CommonFields.FIXTURE_ID)
-    dim_fixture_df = dim_fixture_df.withColumn(
+    int_silver_fixture_df = int_silver_fixture_df.withColumn(
         FixtureFields.FIXTURE_KEY,
         row_number().over(window_spec).cast(LongType())
     )
-    dim_fixture_df = dim_fixture_df.drop("ingestion_time")
+    int_silver_fixture_df = int_silver_fixture_df.drop("ingestion_time")
 
-    return dim_fixture_df
+    return int_silver_fixture_df

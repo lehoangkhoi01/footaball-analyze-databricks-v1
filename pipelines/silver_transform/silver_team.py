@@ -6,37 +6,21 @@ from src.schemas.team_schema import TeamSchema
 from src.schemas.schema_validation import SchemaValidation, ValidationResult
 from pyspark.sql.functions import *
 from src.utils.data_utils import DataUtils
-from src.logging.db_logger import DatabricksLogger
-import logging
-import sys
 from pyspark.sql.types import IntegerType, LongType, TimestampType
 
 # -------------------------------------------------------------------------------
 spark = SparkSession.getActiveSession()
-spark.sql("USE SCHEMA `silver`")
+spark.sql("USE SCHEMA `bronze_intermediate`")
 
 raw_data_storage_location = spark.conf.get("raw_source_dir")
-
-default_logger = DatabricksLogger().get_logger()
-
-# Set up logging configuration
-logger = logging.getLogger("DLTLogger")
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler(sys.stdout) # Change to sys.stderr for stderr
-formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-handler.setFormatter(formatter)
-
-# Avoid duplicate handlers if rerun in notebook
-if not logger.handlers:
-  logger.addHandler(handler)
 
 # -------------------------------------------------------------------------------
 
 
 @dlt.table(
-    name=TableNames.FLATTENED_SILVER_TEAMS,
+    name=TableNames.FLATTEN_BRONZE_TEAMS,
     table_properties={
-        "quality": "silver"
+        "quality": "bronze"
     },
     comment="Select, transform and enrich the bronze data for the 'teams' table",
     schema=TeamSchema.get_silver_schema()
@@ -71,14 +55,14 @@ def silver_team():
 
 
 dlt.create_streaming_table(
-    name=TableNames.SILVER_TEAMS,
+    name=f"silver.{TableNames.SILVER_TEAMS}",
     comment="Apply CDC to silver team table"
 )
 
 # Then you could apply changes to this manually processed table
 dlt.apply_changes(
-    target=TableNames.SILVER_TEAMS,
-    source=TableNames.FLATTENED_SILVER_TEAMS,
+    target=f"silver.{TableNames.SILVER_TEAMS}",
+    source=TableNames.FLATTEN_BRONZE_TEAMS,
     keys=[CommonFields.TEAM_ID],
     sequence_by=col(MetadataFields.INGESTION_TIME),
     stored_as_scd_type=2

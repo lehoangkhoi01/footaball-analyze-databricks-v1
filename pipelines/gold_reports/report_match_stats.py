@@ -11,37 +11,51 @@ from src.utils.football_utils import DataFrameFootballUtils
 
 
 @dlt.table(
-    name=f"gold.{TableNames.FACT_MATCH_STATS}",
+    name=f"gold.{TableNames.REPORT_MATCH_STATS}",
     table_properties={"quality": "gold"},
 )
-def fact_match_stats():
-    dim_fixtures_df = spark.read.table(f"gold.{TableNames.DIM_FIXTURES}")
-    dim_fixture_stats_df = spark.read.table(f"gold.{TableNames.DIM_FIXTURE_STATS}")
-    dim_teams_df = spark.read.table(f"gold.{TableNames.DIM_TEAMS}")
-    dim_leagues_df = spark.read.table(f"gold.{TableNames.DIM_LEAGUES}")
-    dim_dates_df = spark.read.table(f"gold.{TableNames.DIM_DATES}")
+def report_match_stats():
+    dim_fixtures_df = spark.read.table(f"silver.{TableNames.DIM_FIXTURES}")
+    dim_fixture_stats_df = spark.read.table(f"silver.{TableNames.DIM_FIXTURE_STATS}")
+    dim_teams_df = spark.read.table(f"silver.{TableNames.DIM_TEAMS}")
+    dim_leagues_df = spark.read.table(f"silver.{TableNames.DIM_LEAGUES}")
+    dim_dates_df = spark.read.table(f"silver.{TableNames.DIM_DATES}")
+    fact_match_stats_df = spark.read.table(f"silver.{TableNames.FACT_MATCH_STATS}")
 
-    # Join dim tables
-    fact_match_stats_df = (dim_fixture_stats_df.alias("dim_fixture_stats")
-        .join(dim_teams_df.alias("dim_team"),
-              col(f'dim_team.{CommonFields.TEAM_ID}') == col(f'dim_fixture_stats.{CommonFields.TEAM_ID}'),
-              "left")
-        .join(dim_fixtures_df.alias("dim_fixtures"),
-              col(f'dim_fixtures.{CommonFields.FIXTURE_ID}') == col(f'dim_fixture_stats.{CommonFields.FIXTURE_ID}'),
-              "left") 
-        .join(dim_dates_df.alias("dim_dates"),
-              col(f'dim_dates.{DateFields.DATE}') == col(f'dim_fixtures.{FixtureFields.DATE}'),
-              "left"))
+    # join fact and dim
+    report_df = (fact_match_stats_df.alias("fact_match_stats_df")
+                 .join(
+                    dim_fixtures_df.alias("dim_fixtures"),
+                    col(f'dim_fixtures.{FixtureFields.FIXTURE_KEY}') == col(f'fact_match_stats_df.{FactMatchStatisticFields.DIM_FIXTURE_KEY}'),
+                    "left"
+                 )
+                 .join(
+                    dim_fixture_stats_df.alias("dim_fixture_stats"),
+                    col(f'dim_fixture_stats.{FixtureStatsFields.FIXTURE_STAT_KEY}') == col(f'fact_match_stats_df.{FactMatchStatisticFields. DIM_FIXTURE_STAT_KEY}'),
+                    "left"
+                 )
+                 .join(
+                    dim_teams_df.alias("dim_teams"),
+                    col(f'dim_teams.{TeamFields.TEAM_KEY}') == col(f'fact_match_stats_df.{FactMatchStatisticFields.DIM_TEAM_KEY}'),
+                    "left"
+                 )
+                 .join(
+                    dim_dates_df.alias("dim_dates"),
+                    col(f'dim_dates.{DateFields.DATE_KEY}') == col(f'fact_match_stats_df.{FactMatchStatisticFields.DIM_DATE_KEY}'),
+                    "left")
+                .join(
+                    dim_leagues_df.alias("dim_leagues"),
+                    col(f'dim_leagues.{LeagueFields.LEAGUE_KEY}') == col(f'fact_match_stats_df.{FactMatchStatisticFields.DIM_LEAGUE_KEY}'),
+                    "left"
+                )
+    )
 
     # Select desired fields
-    fact_match_stats_df = fact_match_stats_df.select(
-        col(f'dim_fixture_stats.{FixtureStatsFields.FIXTURE_STAT_KEY}').alias(FactMatchStatisticFields.DIM_FIXTURE_STAT_KEY),
-        col(f'dim_team.{TeamFields.TEAM_KEY}').alias(FactMatchStatisticFields.DIM_TEAM_KEY),
-        col(f'dim_fixtures.{FixtureFields.FIXTURE_KEY}').alias(FactMatchStatisticFields.DIM_FIXTURE_KEY),
-        col(f'dim_dates.{DateFields.DATE_KEY}').cast(LongType()).alias(FactMatchStatisticFields.DIM_DATE_KEY),
+    report_df = report_df.select(
         col(f'dim_fixtures.{CommonFields.FIXTURE_ID}').alias(FactMatchStatisticFields.FIXTURE_ID),
-        col(f'dim_team.{CommonFields.TEAM_ID}').alias(FactMatchStatisticFields.TEAM_ID),
-        col(f'dim_team.{TeamFields.TEAM_NAME}').alias(FactMatchStatisticFields.TEAM_NAME),
+        col(f'dim_leagues.{LeagueFields.LEAGUE_NAME}').alias(FactMatchStatisticFields.LEAGUE_NAME),
+        col(f'dim_teams.{CommonFields.TEAM_ID}').alias(FactMatchStatisticFields.TEAM_ID),
+        col(f'dim_teams.{TeamFields.TEAM_NAME}').alias(FactMatchStatisticFields.TEAM_NAME),
         col(f'dim_dates.{DateFields.SEASON}').alias(FactMatchStatisticFields.SEASON),
         col(f'dim_fixtures.{FixtureFields.ROUND}').alias(FactMatchStatisticFields.ROUND),
         col(f'dim_fixtures.{FixtureFields.LEAGUE_STANDINGS}').alias(FactMatchStatisticFields.IS_LEAGUE_STANDINGS),
@@ -49,6 +63,7 @@ def fact_match_stats():
         col(f'dim_fixtures.{FixtureFields.FIRST_PERIOD}').alias(FactMatchStatisticFields.FIRST_PERIOD),
         col(f'dim_fixtures.{FixtureFields.SECOND_PERIOD}').alias(FactMatchStatisticFields.SECOND_PERIOD),
         col(f'dim_fixtures.{FixtureFields.ELAPSED}').alias(FactMatchStatisticFields.ELAPSED),
+        col(f'dim_fixture_stats.{FixtureStatsFields.IS_HOME_MATCH}').alias(FixtureStatsFields.IS_HOME_MATCH),
         col(f'dim_fixture_stats.{FixtureStatsFields.SHOTS_ON_GOAL}').alias(FactMatchStatisticFields.SHOTS_ON_GOAL),
         col(f'dim_fixture_stats.{FixtureStatsFields.SHOTS_OFF_GOAL}').alias(FactMatchStatisticFields.SHOTS_OFF_GOAL),
         col(f'dim_fixture_stats.{FixtureStatsFields.BLOCKED_SHOTS}').alias(FactMatchStatisticFields.BLOCKED_SHOTS),
@@ -67,13 +82,6 @@ def fact_match_stats():
         col(f'dim_fixture_stats.{FixtureStatsFields.EXPECTED_GOALS_RATE}').alias(FactMatchStatisticFields.EXPECTED_GOALS_RATE)
     )
 
-    # Add surrogate key
-    window_spec = Window.orderBy(FactMatchStatisticFields.DIM_FIXTURE_STAT_KEY)
-    fact_match_stats_df = fact_match_stats_df.withColumn(
-        FactMatchStatisticFields.MATCH_STATISTIC_KEY,
-        row_number().over(window_spec).cast(LongType())
-    )
-
     # Add goals details columns
-    fact_match_stats_df = DataFrameFootballUtils.add_goals_columns(fact_match_stats_df, dim_fixtures_df)
-    return fact_match_stats_df
+    report_df = DataFrameFootballUtils.add_goals_columns(report_df, dim_fixtures_df)
+    return report_df

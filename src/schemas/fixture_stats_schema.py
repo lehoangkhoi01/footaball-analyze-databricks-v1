@@ -70,6 +70,7 @@ class FixtureStatsSchema:
     def get_fixture_stats_dim_schema():
         return StructType([
             StructField(FixtureStatsFields.FIXTURE_STAT_KEY, LongType(), nullable=False),
+            StructField(FixtureStatsFields.IS_HOME_MATCH, BooleanType(), nullable=False),
             StructField(CommonFields.FIXTURE_ID, LongType(), nullable=False),
             StructField(CommonFields.TEAM_ID, LongType(), nullable=False),
             StructField(CommonFields.LEAGUE_ID, LongType(), nullable=False),

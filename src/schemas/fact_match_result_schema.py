@@ -4,7 +4,7 @@ from src.schemas.fields import FactMatchResultFields
 
 class FactMatchResultSchema:
     @staticmethod
-    def get_schema():
+    def get_report_schema():
         """
         Returns the schema for the Fact Match Result table.
         
@@ -12,13 +12,6 @@ class FactMatchResultSchema:
             StructType: Schema definition for the Fact Match Result table.
         """
         return StructType([
-            StructField(FactMatchResultFields.MATCH_KEY, LongType(), False),
-            StructField(FactMatchResultFields.DIM_FIXTURE_KEY, LongType(), False),
-            StructField(FactMatchResultFields.DIM_DATE_KEY, IntegerType(), False),
-            StructField(FactMatchResultFields.DIM_HOME_TEAM_KEY, LongType(), False),
-            StructField(FactMatchResultFields.DIM_AWAY_TEAM_KEY, LongType(), False),
-            StructField(FactMatchResultFields.DIM_LEAGUE_KEY, LongType(), False),
-
             StructField(FactMatchResultFields.LEAGUE_NAME, StringType(), False),
             StructField(FactMatchResultFields.HOME_TEAM_NAME, StringType(), False),
             StructField(FactMatchResultFields.AWAY_TEAM_NAME, StringType(), False),
@@ -48,3 +41,20 @@ class FactMatchResultSchema:
             StructField(FactMatchResultFields.IS_AWAY_WIN, BooleanType(), False),
             StructField(FactMatchResultFields.IS_LEAGUE_STANDINGS, BooleanType(), False)
         ])
+
+    @staticmethod
+    def get_fact_schema():
+         return StructType([
+            StructField(FactMatchResultFields.MATCH_KEY, LongType(), False),
+            StructField(FactMatchResultFields.DIM_FIXTURE_KEY, LongType(), False),
+            StructField(FactMatchResultFields.DIM_DATE_KEY, IntegerType(), False),
+            StructField(FactMatchResultFields.DIM_HOME_TEAM_KEY, LongType(), False),
+            StructField(FactMatchResultFields.DIM_AWAY_TEAM_KEY, LongType(), False),
+            StructField(FactMatchResultFields.DIM_LEAGUE_KEY, LongType(), False),
+            StructField(FactMatchResultFields.HOME_TEAM_ID, LongType(), False),
+            StructField(FactMatchResultFields.AWAY_TEAM_ID, LongType(), False),
+            StructField(FactMatchResultFields.LEAGUE_ID, LongType(), False),
+            StructField(FactMatchResultFields.FIXTURE_ID, LongType(), False),
+            StructField(FactMatchResultFields.GOALS_HOME, IntegerType(), False),
+            StructField(FactMatchResultFields.GOALS_AWAY, IntegerType(), False)
+         ])

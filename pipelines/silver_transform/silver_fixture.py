@@ -6,35 +6,19 @@ from src.schemas.fixture_schema import FixtureSchema
 from src.schemas.schema_validation import SchemaValidation, ValidationResult
 from pyspark.sql.functions import *
 from src.utils.data_utils import DataUtils
-from src.logging.db_logger import DatabricksLogger
-import logging
-import sys
 from pyspark.sql.types import IntegerType, LongType, TimestampType, DateType
 
 # -------------------------------------------------------------------------------
 spark = SparkSession.getActiveSession()
-spark.sql("USE SCHEMA `silver`")
+spark.sql("USE SCHEMA `bronze_intermediate`")
 
 raw_data_storage_location = spark.conf.get("raw_source_dir")
-
-default_logger = DatabricksLogger().get_logger()
-
-# Set up logging configuration
-logger = logging.getLogger("DLTLogger")
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler(sys.stdout) # Change to sys.stderr for stderr
-formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-handler.setFormatter(formatter)
-
-# Avoid duplicate handlers if rerun in notebook
-if not logger.handlers:
-  logger.addHandler(handler)
 
 # -------------------------------------------------------------------------------
 
 
 @dlt.table(
-    name=f"silver_intermediate.{TableNames.FLATTENED_BRONZE_FIXTURES}",
+    name=f"bronze_intermediate.{TableNames.FLATTENED_BRONZE_FIXTURES}",
     table_properties={
         "quality": "bronze"
     },
@@ -91,7 +75,7 @@ def flatten_fixture():
 
 
 dlt.create_streaming_table(
-    name=TableNames.SILVER_FIXTURES,
+    name=f"silver.{TableNames.SILVER_FIXTURES}",
     comment="Silver fixture table with SCD type 2",
     table_properties={"quality" : "silver"},
     partition_cols=[CommonFields.LEAGUE_ID]
@@ -99,8 +83,8 @@ dlt.create_streaming_table(
 
 # Then you could apply changes to this manually processed table
 dlt.apply_changes(
-    target=TableNames.SILVER_FIXTURES,
-    source=f"silver_intermediate.{TableNames.FLATTENED_BRONZE_FIXTURES}",
+    target=f"silver.{TableNames.SILVER_FIXTURES}",
+    source=f"bronze_intermediate.{TableNames.FLATTENED_BRONZE_FIXTURES}",
     keys=[CommonFields.FIXTURE_ID],
     sequence_by=col(MetadataFields.INGESTION_TIME),
     stored_as_scd_type=2

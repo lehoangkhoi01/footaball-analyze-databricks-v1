@@ -8,7 +8,7 @@ from src.logging.db_logger import LoggerConfig, get_pipeline_logger
 
 # --------------------------------------------------------------------
 spark = SparkSession.getActiveSession()
-spark.sql("USE SCHEMA `silver`")
+spark.sql("USE SCHEMA `bronze_intermediate`")
 raw_data_storage_location = spark.conf.get("raw_source_dir")
 logger = get_pipeline_logger()
 
@@ -17,7 +17,7 @@ logger = get_pipeline_logger()
 
 
 @dlt.table(
-    name=f"silver_intermediate.{TableNames.INTERMEDIATE_SILVER_FIXTURE_STATS}",
+    name=f"bronze_intermediate.{TableNames.INTERMEDIATE_BRONZE_PIVOTED_FIXTURE_STATS}",
     comment="Select, transform and enrich the bronze data for the 'fixture stat' table",
 )
 def intermediate_silver_fixture():
@@ -90,7 +90,7 @@ def intermediate_silver_fixture():
     return pivoted_df
 
 @dlt.table(
-    name=f"silver_intermediate.transform_fix_stat",
+    name=f"bronze_intermediate.{TableNames.INTERMEDIATE_BRONZE_TRANSFORMED_FIX_STATS}",
     comment="Select, transform and enrich the bronze data for the 'fixture stat' table",
     table_properties={
         "quality" : "silver"
@@ -98,20 +98,20 @@ def intermediate_silver_fixture():
     schema=FixtureStatsSchema.get_silver_schema()
 )
 def transform_fixture_stats():
-    fixture_stats_df = spark.read.table(f'silver_intermediate.{TableNames.INTERMEDIATE_SILVER_FIXTURE_STATS}')
+    fixture_stats_df = spark.read.table(f'bronze_intermediate.{TableNames.INTERMEDIATE_BRONZE_PIVOTED_FIXTURE_STATS}')
     return fixture_stats_df
 
 
 dlt.create_streaming_table(
-    name=TableNames.SILVER_FIXTURE_STATS,
+    name=f"silver.{TableNames.SILVER_FIXTURE_STATS}",
     comment="Silver fixture stat table with SCD type 2",
     table_properties={"quality" : "silver"},
     partition_cols=[CommonFields.TEAM_ID, CommonFields.FIXTURE_ID]
 )
 
 dlt.create_auto_cdc_from_snapshot_flow(
-    target=TableNames.SILVER_FIXTURE_STATS,
-    source=f"silver_intermediate.transform_fix_stat",
+    target=f"silver.{TableNames.SILVER_FIXTURE_STATS}",
+    source=f"bronze_intermediate.{TableNames.INTERMEDIATE_BRONZE_PIVOTED_FIXTURE_STATS}",
     keys=[CommonFields.FIXTURE_ID, CommonFields.TEAM_ID],
     stored_as_scd_type=2
 )

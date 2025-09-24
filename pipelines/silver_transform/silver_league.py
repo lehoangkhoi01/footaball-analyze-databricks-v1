@@ -26,7 +26,7 @@ spark.sql("USE SCHEMA `silver`")
     comment="Select, transform and enrich the bronze data for the 'leagues' table",
     schema=LeagueSchema.get_silver_schema()
 )
-def silver_leagues():
+def bronze_intermediate_leagues():
     # Get bronze data
     bronze_league_df = spark.read.table(f'bronze.{TableNames.BRONZE_LEAGUES}')
 
@@ -39,7 +39,8 @@ def silver_leagues():
                                 col("league_logo").alias(LeagueFields.LOGO).cast(StringType()),
                                 col("country_name").alias(LeagueFields.COUNTRY).cast(StringType()),
                                 col("country_flag").alias(LeagueFields.COUNTRY_FLAG).cast(StringType()),
-                            ))
+                            )
+                            .dropDuplicates([CommonFields.LEAGUE_ID]))
 
     # Add validation columns
     # Validate schema and data quality check

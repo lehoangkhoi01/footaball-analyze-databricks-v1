@@ -3,7 +3,7 @@ from typing import Dict
 from pyspark.sql.functions import *
 from pyspark.sql import Column
 from pyspark.sql.types import StringType, BooleanType
-from src.schemas.fields import FactMatchStatisticFields
+from src.schemas.fields import FactMatchStatisticFields, FixtureStatsFields
 
 
 class FootballUtils:
@@ -194,3 +194,13 @@ class DataFrameFootballUtils:
             ).alias(FactMatchStatisticFields.MATCH_RESULT),
         )
         return final_df
+    
+    # @staticmethod
+    # def home_away_column(fixture_df: DataFrame, fixture_stats_df: Dataframe) -> DataFrame:
+    #     join_
+
+    #     fixture_stats_df = (fixture_stats_df.withColumn(
+    #         FixtureStatsFields.IS_HOME_MATCH,
+    #         when(col(FixtureStatsFields.TEAM_ID) == col(FixtureFields.HOME_TEAM_ID), lit(True)).otherwise(lit(False))
+    #     ))
+    #     return fixture_stats_df

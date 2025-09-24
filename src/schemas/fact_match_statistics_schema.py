@@ -53,3 +53,16 @@ class FactMatchStatisticsSchema:
             StructField(FactMatchStatisticFields.PASSES_SUCCESS_PERCENTAGE, FloatType(), nullable=False),
             StructField(FactMatchStatisticFields.EXPECTED_GOALS_RATE, FloatType(), nullable=False),
         ])
+    
+    @staticmethod
+    def get_fact_schema():
+        return StructType([
+            StructField(FactMatchStatisticFields.MATCH_STATISTIC_KEY, LongType(), nullable=False),
+            StructField(FactMatchStatisticFields.DIM_FIXTURE_KEY, LongType(), nullable=False),
+            StructField(FactMatchStatisticFields.DIM_FIXTURE_STAT_KEY, LongType(), nullable=False),
+            StructField(FactMatchStatisticFields.DIM_DATE_KEY, LongType(), nullable=False),
+            StructField(FactMatchStatisticFields.DIM_TEAM_KEY, LongType(), nullable=False),
+            StructField(FactMatchStatisticFields.DIM_LEAGUE_KEY, LongType(), nullable=False),
+            StructField(FactMatchStatisticFields.FIXTURE_ID, LongType(), nullable=False),
+            StructField(FactMatchStatisticFields.TEAM_ID, LongType(), nullable=False)
+        ])

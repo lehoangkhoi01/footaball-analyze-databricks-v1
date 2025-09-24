@@ -5,29 +5,12 @@ import json
 from src.schemas.fixture_schema import FixtureSchema
 from pyspark.sql.functions import *
 from src.utils.data_utils import DataUtils
-from src.logging.db_logger import DatabricksLogger
-import logging
-import sys
 
 # -------------------------------------------------------------------------------
 spark = SparkSession.getActiveSession()
 spark.sql("USE SCHEMA `bronze`")
 
 raw_data_storage_location = spark.conf.get("raw_source_dir")
-
-default_logger = DatabricksLogger().get_logger()
-
-# Set up logging configuration
-logger = logging.getLogger("DLTLogger")
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler(sys.stdout) # Change to sys.stderr for stderr
-formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-handler.setFormatter(formatter)
-
-# Avoid duplicate handlers if rerun in notebook
-if not logger.handlers:
-  logger.addHandler(handler)
-
 
 # -------------------------------------------------------------------------------
 @dlt.table(

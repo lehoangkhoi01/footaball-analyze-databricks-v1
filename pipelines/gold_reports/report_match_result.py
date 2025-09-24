@@ -12,45 +12,45 @@ from pyspark.sql.types import LongType
 
 
 @dlt.table(
-    name=f"gold.{TableNames.FACT_MATCH_RESULT}",
+    name=f"gold.{TableNames.REPORT_MATCH_RESULT}",
     table_properties={"quality": "gold"},
-    schema=FactMatchResultSchema.get_schema()
+    schema=FactMatchResultSchema.get_report_schema()
 )
-def fact_match_result():
-    dim_fixtures_df = spark.read.table(f"gold.{TableNames.DIM_FIXTURES}")
-    dim_fixtures_stats_df = spark.read.table(f"gold.{TableNames.DIM_FIXTURE_STATS}")
-    dim_teams_df = spark.read.table(f"gold.{TableNames.DIM_TEAMS}")
-    dim_leagues_df = spark.read.table(f"gold.{TableNames.DIM_LEAGUES}")
-    dim_dates_df = spark.read.table(f"gold.{TableNames.DIM_DATES}")
+def report_match_result():
+    dim_fixtures_df = spark.read.table(f"silver.{TableNames.DIM_FIXTURES}")
+    dim_teams_df = spark.read.table(f"silver.{TableNames.DIM_TEAMS}")
+    dim_leagues_df = spark.read.table(f"silver.{TableNames.DIM_LEAGUES}")
+    dim_dates_df = spark.read.table(f"silver.{TableNames.DIM_DATES}")
 
-    # Join dimensions
-    fact_match_result = (
-        dim_fixtures_df.alias("dim_fixtures")
+    fact_match_result_df = spark.read.table(f"silver.{TableNames.FACT_MATCH_RESULT}")
+
+    # Join fact and dim
+    report_df = (
+        fact_match_result_df.alias("fact_match_result_df")
         .join(
             dim_teams_df.alias("dim_teams_home"),
-            col(f'dim_teams_home.{CommonFields.TEAM_ID}') == col(f'dim_fixtures.{FixtureFields.HOME_TEAM_ID}')
+            col(f'dim_teams_home.{TeamFields.TEAM_KEY}') == col(f'fact_match_result_df.{FactMatchResultFields.DIM_HOME_TEAM_KEY}')
         )
         .join(
-            dim_teams_df.alias("dim_teams_away"),
-            col(f'dim_teams_away.{CommonFields.TEAM_ID}') == col(f'dim_fixtures.{FixtureFields.AWAY_TEAM_ID}')
+             dim_teams_df.alias("dim_teams_away"),
+            col(f'dim_teams_away.{TeamFields.TEAM_KEY}') == col(f'fact_match_result_df.{FactMatchResultFields.DIM_AWAY_TEAM_KEY}')
         )
         .join(
             dim_leagues_df.alias("dim_leagues"),
-            col(f'dim_leagues.{CommonFields.LEAGUE_ID}') == col(f'dim_fixtures.{CommonFields.LEAGUE_ID}')
+            col(f'dim_leagues.{LeagueFields.LEAGUE_KEY}') == col(f'fact_match_result_df.{FactMatchResultFields.DIM_LEAGUE_KEY}')
         )
         .join(
             dim_dates_df.alias("dim_dates"),
-            col(f'dim_dates.{DateFields.DATE}') == col(f'dim_fixtures.{FixtureFields.DATE}')
+            col(f'dim_dates.{DateFields.DATE_KEY}') == col(f'fact_match_result_df.{FactMatchResultFields.DIM_DATE_KEY}')
+        )
+        .join(
+            dim_fixtures_df.alias("dim_fixtures"),
+            col(f'dim_fixtures.{FixtureFields.FIXTURE_KEY}') == col(f'fact_match_result_df.{FactMatchResultFields.DIM_FIXTURE_KEY}')
         )
     )
 
     # Select desired fields
-    fact_match_result = fact_match_result.select(
-        col(f'dim_fixtures.{FixtureFields.FIXTURE_KEY}').alias(FactMatchResultFields.DIM_FIXTURE_KEY),
-        col(f'dim_leagues.{LeagueFields.LEAGUE_KEY}').alias(FactMatchResultFields.DIM_LEAGUE_KEY),
-        col(f'dim_teams_home.{TeamFields.TEAM_KEY}').alias(FactMatchResultFields.DIM_HOME_TEAM_KEY),
-        col(f'dim_teams_away.{TeamFields.TEAM_KEY}').alias(FactMatchResultFields.DIM_AWAY_TEAM_KEY),
-        col(f'dim_dates.{DateFields.DATE_KEY}').alias(FactMatchResultFields.DIM_DATE_KEY),
+    report_df = report_df.select(
         col(f'dim_leagues.{LeagueFields.LEAGUE_NAME}').alias(FactMatchResultFields.LEAGUE_NAME),
         col(f'dim_teams_home.{TeamFields.TEAM_NAME}').alias(FactMatchResultFields.HOME_TEAM_NAME),
         col(f'dim_teams_away.{TeamFields.TEAM_NAME}').alias(FactMatchResultFields.AWAY_TEAM_NAME),
@@ -73,16 +73,9 @@ def fact_match_result():
         col(f'dim_fixtures.{FixtureFields.LEAGUE_STANDINGS}').alias(FactMatchResultFields.IS_LEAGUE_STANDINGS),
     )
 
-    # Add surrogate key
-    window_spec = Window.orderBy(FactMatchResultFields.DIM_FIXTURE_KEY)
-    fact_match_result = fact_match_result.withColumn(
-        FactMatchResultFields.MATCH_KEY,
-        row_number().over(window_spec).cast(LongType())
-    )
-
     # Add calculated columns
-    fact_match_result = (
-        fact_match_result
+    report_df = (
+        report_df
         .withColumn(
             FactMatchResultFields.TOTAL_GOALS,
             (col(FactMatchResultFields.GOALS_HOME).cast("int") + col(FactMatchResultFields.GOALS_AWAY).cast("int"))
@@ -102,4 +95,4 @@ def fact_match_result():
         .withColumn(FactMatchResultFields.IS_AWAY_WIN, col(FactMatchResultFields.GOALS_HOME) < col(FactMatchResultFields.GOALS_AWAY))
         .withColumn(FactMatchResultFields.IS_DRAW, col(FactMatchResultFields.GOALS_HOME) == col(FactMatchResultFields.GOALS_AWAY))
     )
-    return fact_match_result
+    return report_df
